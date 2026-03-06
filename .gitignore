@@ -1,0 +1,33 @@
+# Environment
+.env
+.env.local
+.env.*.local
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Temp files
+temp_*/
+*.tmp
+*.mp4
+*.webm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

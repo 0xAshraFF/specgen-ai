@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecGen AI — Test Generation from Screen Recordings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-tertiary: #19191d;
+            --bg-card: #141417;
+            --border: #26262c;
+            --border-hover: #38383f;
+            --text-primary: #e8e8ed;
+            --text-secondary: #8e8e9a;
+            --text-dim: #55555e;
+            --accent: #6c5ce7;
+            --accent-hover: #7f71ed;
+            --accent-glow: rgba(108, 92, 231, 0.15);
+            --green: #2ecc71;
+            --green-dim: rgba(46, 204, 113, 0.12);
+            --amber: #f0a500;
+            --amber-dim: rgba(240, 165, 0, 0.12);
+            --red: #e74c3c;
+            --red-dim: rgba(231, 76, 60, 0.12);
+            --radius: 10px;
+            --font-body: 'DM Sans', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* --- Header --- */
+        header {
+            padding: 40px 0 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo h1 span {
+            color: var(--accent);
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+            padding-left: 48px;
+        }
+
+        /* --- Sections --- */
+        section {
+            padding: 28px 0;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+        }
+
+        /* --- Input Card --- */
+        .input-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .field .hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* --- Drop Zone --- */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .drop-zone.has-file {
+            border-color: var(--green);
+            background: var(--green-dim);
+        }
+
+        .drop-zone-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .drop-zone-text strong {
+            color: var(--accent);
+        }
+
+        .file-name {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--green);
+            margin-top: 6px;
+        }
+
+        .file-limit {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 8px;
+        }
+
+        /* --- Row Layout --- */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        /* --- Button --- */
+        .btn-generate {
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+            letter-spacing: -0.2px;
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* --- Progress --- */
+        .progress-area {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .progress-area.visible {
+            display: block;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .progress-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-status .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- Results --- */
+        .results-area {
+            display: none;
+        }
+
+        .results-area.visible {
+            display: block;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px 12px;
+            background: none;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-body);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Content blocks */
+        .result-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-header h3 {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-copy {
+            padding: 5px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .btn-copy.copied {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .result-content {
+            padding: 18px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-content pre {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-primary);
+        }
+
+        .result-content .summary-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        /* Manual Test Cases */
+        .test-case {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 14px;
+            background: var(--bg-secondary);
+        }
+
+        .test-case:last-child {
+            margin-bottom: 0;
+        }
+
+        .tc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .tc-id {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .tc-priority {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .tc-priority.high {
+            background: var(--red-dim);
+            color: var(--red);
+        }
+
+        .tc-priority.medium {
+            background: var(--amber-dim);
+            color: var(--amber);
+        }
+
+        .tc-priority.low {
+            background: var(--green-dim);
+            color: var(--green);
+        }
+
+        .tc-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .tc-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            margin-top: 10px;
+        }
+
+        .tc-step {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .tc-step-num {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            min-width: 22px;
+        }
+
+        /* Action Log */
+        .action-entry {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .action-entry:last-child {
+            border-bottom: none;
+        }
+
+        .action-time {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            padding-top: 2px;
+        }
+
+        .action-desc {
+            color: var(--text-secondary);
+        }
+
+        .action-desc strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* Metadata */
+        .metadata {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 7px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* --- Error --- */
+        .error-msg {
+            display: none;
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: var(--red-dim);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: var(--radius);
+            color: var(--red);
+            font-size: 13px;
+        }
+
+        .error-msg.visible {
+            display: block;
+        }
+
+        /* --- Privacy Notice --- */
+        .privacy {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border-radius: 7px;
+            font-size: 11px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .privacy strong {
+            color: var(--text-secondary);
+        }
+
+        /* --- Footer --- */
+        footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+            text-align: center;
+        }
+
+        footer p {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        /* --- Responsive --- */
+        @media (max-width: 640px) {
+            .row { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; }
+            .tab { font-size: 11px; padding: 8px; }
+            .metadata { flex-direction: column; gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <h1>Spec<span>Gen</span> AI</h1>
+            </div>
+            <p>Turn screen recordings into test cases, documentation, and automation scripts.</p>
+        </header>
+
+        <!-- Input Section -->
+        <section>
+            <div class="section-label">Configuration</div>
+            <div class="input-card">
+                <!-- API Key -->
+                <div class="field">
+                    <label>Anthropic API Key</label>
+                    <div class="hint">Your key is sent directly to Anthropic's API — never stored on any server.</div>
+                    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off" />
+                </div>
+
+                <!-- Model + Framework row -->
+                <div class="row">
+                    <div class="field">
+                        <label>Model</label>
+                        <select id="model">
+                            <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (recommended)</option>
+                            <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Framework</label>
+                        <select id="framework">
+                            <option value="playwright">Playwright (TypeScript)</option>
+                            <!-- V2: more frameworks -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Video Upload -->
+                <div class="field">
+                    <label>Screen Recording</label>
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-icon">🎬</div>
+                        <div class="drop-zone-text"><strong>Click to upload</strong> or drag and drop</div>
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-limit">MP4 or WEBM • Max 2 minutes • Max 100MB</div>
+                    </div>
+                    <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
+                </div>
+
+                <div class="privacy">
+                    <strong>🔒 Privacy:</strong> Your API key is used client-to-server only for this request and is never stored.
+                    Video files are processed in memory and deleted immediately after. This runs 100% locally.
+                </div>
+
+                <button class="btn-generate" id="btnGenerate" disabled>
+                    Generate Test Cases
+                </button>
+
+                <!-- Progress -->
+                <div class="progress-area" id="progressArea">
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-status" id="progressStatus">
+                        <span class="spinner">⟳</span> Preparing...
+                    </div>
+                </div>
+
+                <!-- Error -->
+                <div class="error-msg" id="errorMsg"></div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-area" id="resultsArea">
+            <div class="section-label">Generated Output</div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="tabs">
+                <button class="tab active" data-tab="summary">Feature Summary</button>
+                <button class="tab" data-tab="testcases">Manual Test Cases</button>
+                <button class="tab" data-tab="actions">Action Log</button>
+                <button class="tab" data-tab="playwright">Playwright Script</button>
+            </div>
+
+            <!-- Tab: Feature Summary -->
+            <div class="tab-panel active" id="panel-summary">
+                <div class="result-block">
+                    <div class="result-header">
+                        <h3>Feature Summary</h3>
+                        <button class="btn-copy" data-target="summaryContent">Copy</button>
+                    </div>
+                    <div class="result-content">
+                        <div class="summary-text" id="summaryContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Manual Test Cases -->
+            <div class="tab-panel" id="panel-testcases">
+                <div class="result-block">
+                    <div class="result-header">
+                        <h3>Manual Test Cases</h3>
+                        <button class="btn-copy" data-target="testcasesRaw">Copy All (JSON)</button>
+                    </div>
+                    <div class="result-content" id="testcasesContent"></div>
+                    <textarea hidden id="testcasesRaw"></textarea>
+                </div>
+            </div>
+
+            <!-- Tab: Action Log -->
+            <div class="tab-panel" id="panel-actions">
+                <div class="result-block">
+                    <div class="result-header">
+                        <h3>Step-by-Step Action Log</h3>
+                        <button class="btn-copy" data-target="actionsRaw">Copy</button>
+                    </div>
+                    <div class="result-content" id="actionsContent"></div>
+                    <textarea hidden id="actionsRaw"></textarea>
+                </div>
+            </div>
+
+            <!-- Tab: Playwright Script -->
+            <div class="tab-panel" id="panel-playwright">
+                <div class="result-block">
+                    <div class="result-header">
+                        <h3>Playwright TypeScript</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-copy" id="btnDownload">Download .spec.ts</button>
+                            <button class="btn-copy" data-target="playwrightContent">Copy</button>
+                        </div>
+                    </div>
+                    <div class="result-content">
+                        <pre id="playwrightContent"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="metadata" id="metadata"></div>
+        </section>
+
+        <footer>
+            <p>SpecGen AI v0.1.0-alpha • Built by <a href="https://github.com/0xAshraFF" target="_blank">@0xAshraFF</a> • <a href="https://github.com/0xAshraFF/specgen-ai" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const $ = id => document.getElementById(id);
+        const apiKey = $('apiKey');
+        const model = $('model');
+        const framework = $('framework');
+        const dropZone = $('dropZone');
+        const videoInput = $('videoInput');
+        const fileName = $('fileName');
+        const btnGenerate = $('btnGenerate');
+        const progressArea = $('progressArea');
+        const progressFill = $('progressFill');
+        const progressStatus = $('progressStatus');
+        const errorMsg = $('errorMsg');
+        const resultsArea = $('resultsArea');
+
+        let selectedFile = null;
+
+        // --- File Upload ---
+        dropZone.addEventListener('click', () => videoInput.click());
+
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        videoInput.addEventListener('change', e => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            const valid = ['video/mp4', 'video/webm', 'video/quicktime'];
+            if (!valid.includes(file.type)) {
+                showError('Please upload an MP4 or WEBM video file.');
+                return;
+            }
+            if (file.size > 100 * 1024 * 1024) {
+                showError('File too large. Maximum size is 100MB.');
+                return;
+            }
+            selectedFile = file;
+            fileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`;
+            dropZone.classList.add('has-file');
+            dropZone.querySelector('.drop-zone-icon').textContent = '✅';
+            checkReady();
+        }
+
+        // --- Validation ---
+        apiKey.addEventListener('input', checkReady);
+
+        function checkReady() {
+            btnGenerate.disabled = !(apiKey.value.startsWith('sk-ant-') && selectedFile);
+        }
+
+        // --- Generate ---
+        btnGenerate.addEventListener('click', async () => {
+            if (btnGenerate.disabled) return;
+
+            // Reset state
+            hideError();
+            resultsArea.classList.remove('visible');
+            progressArea.classList.add('visible');
+            btnGenerate.disabled = true;
+            btnGenerate.textContent = 'Generating...';
+
+            try {
+                // Step 1: Upload & process
+                updateProgress(15, 'Uploading video...');
+                await sleep(300);
+
+                updateProgress(30, 'Extracting keyframes (OpenCV SSIM)...');
+
+                const formData = new FormData();
+                formData.append('video', selectedFile);
+
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': apiKey.value,
+                        'x-model': model.value,
+                        'x-framework': framework.value,
+                    },
+                    body: formData,
+                });
+
+                updateProgress(70, 'AI is analyzing screenshots...');
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Generation failed');
+                }
+
+                updateProgress(90, 'Building outputs...');
+                const result = await response.json();
+                await sleep(200);
+
+                updateProgress(100, 'Done!');
+                await sleep(400);
+
+                renderResults(result.data, result.video_info);
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                progressArea.classList.remove('visible');
+                progressFill.style.width = '0%';
+                btnGenerate.disabled = false;
+                btnGenerate.textContent = 'Generate Test Cases';
+                checkReady();
+            }
+        });
+
+        // --- Render Results ---
+        function renderResults(data, videoInfo) {
+            // Feature Summary
+            $('summaryContent').textContent = data.feature_summary;
+
+            // Manual Test Cases — categorized
+            const tcContainer = $('testcasesContent');
+            tcContainer.innerHTML = '';
+
+            const categories = [
+                { key: 'positive_happy_path', label: 'Positive / Happy Path', icon: '✅', color: 'var(--green)' },
+                { key: 'smoke_sanity', label: 'Smoke / Sanity', icon: '🔥', color: 'var(--amber)' },
+                { key: 'negative_security', label: 'Negative & Security', icon: '🛡️', color: 'var(--red)' },
+                { key: 'e2e_workflow', label: 'E2E Workflow', icon: '🔗', color: 'var(--accent)' },
+                { key: 'ui_ux_validation', label: 'UI/UX Validation', icon: '🎨', color: '#e884f3' },
+                { key: 'suggested_edge_cases', label: 'Suggested Edge Cases', icon: '⚡', color: 'var(--text-dim)' },
+            ];
+
+            // Handle both old flat array format and new categorized format
+            let testCases = data.manual_test_cases;
+            let isCategorized = testCases && !Array.isArray(testCases);
+            let totalCount = 0;
+            let allCasesFlat = [];
+
+            if (isCategorized) {
+                categories.forEach(cat => {
+                    const cases = testCases[cat.key];
+                    if (!cases || !Array.isArray(cases) || cases.length === 0) return;
+
+                    totalCount += cases.length;
+                    cases.forEach(tc => allCasesFlat.push(tc));
+
+                    // Category header
+                    const header = document.createElement('div');
+                    header.style.cssText = `
+                        display: flex; align-items: center; gap: 10px;
+                        padding: 12px 16px; margin-top: 16px; margin-bottom: 8px;
+                        background: var(--bg-tertiary); border-radius: 8px;
+                        border-left: 3px solid ${cat.color};
+                    `;
+                    header.innerHTML = `
+                        <span style="font-size: 16px;">${cat.icon}</span>
+                        <span style="font-size: 13px; font-weight: 700; color: ${cat.color};">${cat.label}</span>
+                        <span style="font-size: 11px; color: var(--text-dim); margin-left: auto;">${cases.length} case${cases.length !== 1 ? 's' : ''}</span>
+                    `;
+                    tcContainer.appendChild(header);
+
+                    // Render each test case
+                    cases.forEach(tc => {
+                        tcContainer.appendChild(createTestCaseEl(tc));
+                    });
+                });
+            } else if (Array.isArray(testCases)) {
+                // Fallback: flat array (backward compat)
+                totalCount = testCases.length;
+                allCasesFlat = testCases;
+                testCases.forEach(tc => {
+                    tcContainer.appendChild(createTestCaseEl(tc));
+                });
+            }
+
+            // Summary bar
+            if (totalCount > 0) {
+                const summary = document.createElement('div');
+                summary.style.cssText = `
+                    display: flex; align-items: center; gap: 12px;
+                    padding: 10px 16px; background: var(--accent-glow);
+                    border: 1px solid var(--border); border-radius: 8px; margin-bottom: 4px;
+                    font-size: 13px; color: var(--text-secondary);
+                `;
+                summary.innerHTML = `<strong style="color: var(--text-primary);">${totalCount} test cases generated</strong> <span style="color: var(--text-dim);">• Max budget: 20</span>`;
+                tcContainer.insertBefore(summary, tcContainer.firstChild);
+            }
+
+            $('testcasesRaw').value = JSON.stringify(data.manual_test_cases, null, 2);
+
+            // Action Log
+            const actionsContainer = $('actionsContent');
+            actionsContainer.innerHTML = '';
+            let actionsText = '';
+
+            data.action_log.forEach(a => {
+                actionsText += `[${a.timestamp}] ${a.action} — ${a.observation}\n`;
+                const el = document.createElement('div');
+                el.className = 'action-entry';
+                el.innerHTML = `
+                    <div class="action-time">${a.timestamp}</div>
+                    <div class="action-desc">
+                        <strong>${a.action}</strong>
+                        ${a.observation || ''}
+                    </div>
+                `;
+                actionsContainer.appendChild(el);
+            });
+            $('actionsRaw').value = actionsText;
+
+            // Playwright Script
+            $('playwrightContent').textContent = data.playwright_script;
+
+            // Metadata
+            const meta = data._metadata || {};
+            $('metadata').innerHTML = `
+                <span>Model: ${meta.model || 'N/A'}</span>
+                <span>Keyframes: ${meta.keyframes_processed || 'N/A'}</span>
+                <span>Tokens: ${meta.usage?.input_tokens || 0} in / ${meta.usage?.output_tokens || 0} out</span>
+                <span>Framework: ${meta.framework || 'playwright'}</span>
+                <span>Test cases: ${totalCount}/20</span>
+            `;
+
+            // Show results
+            resultsArea.classList.add('visible');
+            resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function createTestCaseEl(tc) {
+            const el = document.createElement('div');
+            el.className = 'test-case';
+
+            const confidenceColors = {
+                high: { bg: 'var(--green-dim)', color: 'var(--green)' },
+                medium: { bg: 'var(--amber-dim)', color: 'var(--amber)' },
+                low: { bg: 'var(--red-dim)', color: 'var(--red)' },
+            };
+            const conf = confidenceColors[tc.confidence] || confidenceColors.medium;
+
+            el.innerHTML = `
+                <div class="tc-header">
+                    <span class="tc-id">${tc.id}</span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        ${tc.confidence ? `<span style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; background: ${conf.bg}; color: ${conf.color};">${tc.confidence} confidence</span>` : ''}
+                        <span class="tc-priority ${(tc.priority || 'medium').toLowerCase()}">${tc.priority || 'Medium'}</span>
+                    </div>
+                </div>
+                <div class="tc-title">${tc.title}</div>
+                ${tc.preconditions && tc.preconditions.length ? `
+                    <div class="tc-section-label">Preconditions</div>
+                    ${tc.preconditions.map(p => `<div class="tc-step">• ${p}</div>`).join('')}
+                ` : ''}
+                <div class="tc-section-label">Steps</div>
+                ${tc.steps.map(s => `
+                    <div class="tc-step">
+                        <span class="tc-step-num">${s.step}.</span>
+                        <div><strong>${s.action}</strong><br/><span style="color:var(--text-dim)">Expected: ${s.expected}</span></div>
+                    </div>
+                `).join('')}
+                ${tc.postconditions && tc.postconditions.length ? `
+                    <div class="tc-section-label">Postconditions</div>
+                    ${tc.postconditions.map(p => `<div class="tc-step">• ${p}</div>`).join('')}
+                ` : ''}
+            `;
+            return el;
+        }
+
+        // --- Tabs ---
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                $(`panel-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // --- Copy Buttons ---
+        document.querySelectorAll('.btn-copy[data-target]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = $(btn.dataset.target);
+                const text = target.value || target.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const orig = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.classList.remove('copied');
+                    }, 1500);
+                });
+            });
+        });
+
+        // --- Download ---
+        $('btnDownload').addEventListener('click', () => {
+            const code = $('playwrightContent').textContent;
+            const blob = new Blob([code], { type: 'text/typescript' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'specgen-output.spec.ts';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        // --- Helpers ---
+        function updateProgress(pct, msg) {
+            progressFill.style.width = pct + '%';
+            progressStatus.innerHTML = `<span class="spinner">⟳</span> ${msg}`;
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('visible');
+        }
+
+        function hideError() {
+            errorMsg.classList.remove('visible');
+        }
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+    </script>
+</body>
+</html>
